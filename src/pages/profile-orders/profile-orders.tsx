@@ -4,12 +4,14 @@ import { FC, useEffect } from 'react';
 import { RootState, useDispatch, useSelector } from '../../services/store';
 import {
   getFeedsThunk,
-  getOrdersThunk,
-  selectHistoryOrders
-} from '../../services/orders/orders-slice';
+  getOrdersThunk
+} from '../../services/order/order-slice';
 
 export const ProfileOrders: FC = () => {
-  const orders: TOrder[] = useSelector(selectHistoryOrders);
+  /** TODO: взять переменную из стора */
+  const orders: TOrder[] = useSelector(
+    (state: RootState) => state.order.history.orders
+  );
   const dispatch = useDispatch();
 
   useEffect(() => {

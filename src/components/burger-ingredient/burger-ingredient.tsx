@@ -4,11 +4,13 @@ import { useLocation } from 'react-router-dom';
 import { BurgerIngredientUI } from '@ui';
 import { TBurgerIngredientProps } from './type';
 import { getIngredientsThunk } from '../../services/ingredients/ingredients-slice';
-import { AppDispatch, useDispatch, useSelector } from '../../services/store';
 import {
-  addIngredientToOrder,
-  selectCurrentOrderIngredients
-} from '../../services/constructor/constructor-slice';
+  AppDispatch,
+  RootState,
+  useDispatch,
+  useSelector
+} from '../../services/store';
+import { addIngredientToOrder } from '../../services/order/order-slice';
 
 export const BurgerIngredient: FC<TBurgerIngredientProps> = ({
   ingredient,
@@ -16,7 +18,9 @@ export const BurgerIngredient: FC<TBurgerIngredientProps> = ({
 }) => {
   const location = useLocation();
   const dispatch = useDispatch();
-  const order = useSelector(selectCurrentOrderIngredients);
+  const order = useSelector(
+    (state: RootState) => state.order.current.ingredients
+  );
 
   const handleAdd = () => {
     dispatch(addIngredientToOrder(ingredient));
