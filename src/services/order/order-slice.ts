@@ -26,6 +26,7 @@ type ConstructorPayload = {
 
 const initialState: {
   isOrderLoading: boolean;
+  isOrderNumberLoading: boolean;
   isFeedLoading: boolean;
   isHistoryLoading: boolean;
   current: TCurrentOrder;
@@ -35,6 +36,7 @@ const initialState: {
   feed: TOrdersData;
 } = {
   isOrderLoading: false,
+  isOrderNumberLoading: false,
   isFeedLoading: false,
   isHistoryLoading: false,
   current: {
@@ -138,14 +140,14 @@ export const orderSlice = createSlice({
       state.isOrderLoading = false;
     });
     builder.addCase(getOrderByNumberThunk.pending, (state) => {
-      state.isOrderLoading = true;
+      state.isOrderNumberLoading = true;
     });
     builder.addCase(getOrderByNumberThunk.fulfilled, (state, { payload }) => {
-      state.isOrderLoading = false;
+      state.isOrderNumberLoading = false;
       state.orderByNumber = payload.orders[0];
     });
     builder.addCase(getOrderByNumberThunk.rejected, (state) => {
-      state.isOrderLoading = false;
+      state.isOrderNumberLoading = false;
     });
     builder.addCase(getFeedsThunk.pending, (state) => {
       state.isFeedLoading = true;

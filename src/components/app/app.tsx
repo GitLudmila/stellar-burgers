@@ -37,6 +37,8 @@ const App = () => {
   const profileOrderNumber = useMatch('/profile/orders/:number')?.params.number;
   const feedNumber = useMatch('/feed/:number')?.params.number;
 
+  const handleModalClose = () => navigate(-1);
+
   const isIngredientsLoading = useSelector(
     (state: RootState) => state.ingredients.isLoading
   );
@@ -52,32 +54,31 @@ const App = () => {
 
   return (
     <div className={styles.app}>
+      <AppHeader />
       <Routes location={background || location}>
         <Route path={'*'} element={<NotFound404 />} />
-        <Route path={'/'} element={<AppHeader />}>
-          <Route
-            path={'/'}
-            element={
-              isIngredientsLoading ? (
-                <Preloader />
-              ) : error ? (
-                <div
-                  className={`${styles.error} text text_type_main-medium pt-4`}
-                >
-                  {error}
-                </div>
-              ) : ingredients.length > 0 ? (
-                <ConstructorPage />
-              ) : (
-                <div
-                  className={`${styles.title} text text_type_main-medium pt-4`}
-                >
-                  Нет ингредиентов
-                </div>
-              )
-            }
-          />
-        </Route>
+        <Route
+          path={'/'}
+          element={
+            isIngredientsLoading ? (
+              <Preloader />
+            ) : error ? (
+              <div
+                className={`${styles.error} text text_type_main-medium pt-4`}
+              >
+                {error}
+              </div>
+            ) : ingredients.length > 0 ? (
+              <ConstructorPage />
+            ) : (
+              <div
+                className={`${styles.title} text text_type_main-medium pt-4`}
+              >
+                Нет ингредиентов
+              </div>
+            )
+          }
+        />
         <Route path={'/feed'} element={<Feed />} />
         <Route
           path={'/login'}
@@ -159,7 +160,7 @@ const App = () => {
               <Modal
                 title={`#${feedNumber}`}
                 onClose={function (): void {
-                  navigate(-1);
+                  handleModalClose;
                 }}
               >
                 <OrderInfo />
@@ -172,7 +173,7 @@ const App = () => {
               <Modal
                 title={'Описание ингредиента'}
                 onClose={function (): void {
-                  navigate(-1);
+                  handleModalClose;
                 }}
               >
                 <IngredientDetails />
@@ -186,7 +187,7 @@ const App = () => {
                 <Modal
                   title={`#${profileOrderNumber}`}
                   onClose={function (): void {
-                    navigate(-1);
+                    handleModalClose;
                   }}
                 >
                   <OrderInfo />

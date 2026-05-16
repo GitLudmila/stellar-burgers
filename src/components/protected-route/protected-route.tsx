@@ -1,7 +1,11 @@
 import React from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
-import { selectIsAuthInit } from '../../services/user/user-slice';
+import {
+  selectIsAuthInit,
+  selectIsCheckingSession
+} from '../../services/user/user-slice';
 import { useSelector } from '../../services/store';
+import { Preloader } from '@ui';
 
 type ProtectedRouteProps = {
   onlyUnAuth?: boolean;
@@ -13,7 +17,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children
 }) => {
   const isAuthInit = useSelector(selectIsAuthInit);
+  const isCheckingSession = useSelector(selectIsCheckingSession);
   const location = useLocation();
+
+  if (isCheckingSession) {
+    return <Preloader />;
+  }
 
   if (onlyUnAuth && isAuthInit) {
     const from = (location.state?.from as Location) || { pathname: '/' };

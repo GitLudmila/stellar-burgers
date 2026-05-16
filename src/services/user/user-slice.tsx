@@ -10,12 +10,14 @@ import {
 
 export interface UserState {
   isInit: boolean;
+  isCheckingSession: boolean;
   isLoading: boolean;
   user: TUser | null;
 }
 
 const initialState: UserState = {
   isInit: false,
+  isCheckingSession: true,
   isLoading: false,
   user: null
 };
@@ -32,12 +34,16 @@ export const userSlice = createSlice({
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
+    },
+    setSessionCheckComplete: (state) => {
+      state.isCheckingSession = false;
     }
   },
   selectors: {
     selectUser: (state) => state.user,
     selectIsAuthInit: (state) => state.isInit,
-    selectIsLoading: (state) => state.isLoading
+    selectIsLoading: (state) => state.isLoading,
+    selectIsCheckingSession: (state) => state.isCheckingSession
   },
   extraReducers: (builder) => {
     builder.addCase(loginUserThunk.pending, (state) => {
@@ -68,10 +74,13 @@ export const userSlice = createSlice({
     builder.addCase(getUserThunk.fulfilled, (state, { payload }) => {
       state.isLoading = false;
       state.isInit = true;
+      state.isCheckingSession = false;
       state.user = payload.user;
     });
     builder.addCase(getUserThunk.rejected, (state) => {
       state.isLoading = false;
+      state.isInit = false;
+      state.isCheckingSession = false;
     });
     builder.addCase(logoutThunk.pending, (state) => {
       state.isLoading = true;
@@ -79,6 +88,7 @@ export const userSlice = createSlice({
     builder.addCase(logoutThunk.fulfilled, (state, { payload }) => {
       state.isLoading = false;
       state.isInit = false;
+      state.user = null;
     });
     builder.addCase(logoutThunk.rejected, (state) => {
       state.isLoading = false;
@@ -98,7 +108,11 @@ export const userSlice = createSlice({
 });
 
 export const { setIsInit, setIsLoading, setUser } = userSlice.actions;
-export const { selectUser, selectIsAuthInit, selectIsLoading } =
-  userSlice.selectors;
+export const {
+  selectUser,
+  selectIsAuthInit,
+  selectIsLoading,
+  selectIsCheckingSession
+} = userSlice.selectors;
 
 export default userSlice.reducer;
