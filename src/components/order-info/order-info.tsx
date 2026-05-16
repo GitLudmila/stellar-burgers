@@ -4,15 +4,15 @@ import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
 import { RootState, useDispatch, useSelector } from '../../services/store';
 import { useParams } from 'react-router-dom';
-import { getOrderByNumberThunk } from '../../services/order/order-slice';
+import {
+  getOrderByNumberThunk,
+  selectOrderByNumber
+} from '../../services/orders/orders-slice';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
   console.log('render ord info');
   const { number } = useParams();
-  const orderData = useSelector(
-    (state: RootState) => state.order.orderByNumber
-  );
+  const orderData = useSelector(selectOrderByNumber);
 
   const dispatch = useDispatch();
   useEffect(() => {

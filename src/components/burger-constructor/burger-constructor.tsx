@@ -1,12 +1,14 @@
 import { FC, useMemo } from 'react';
 import { TConstructorIngredient, TIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
-import { RootState, useDispatch, useSelector } from '../../services/store';
+import { useDispatch, useSelector } from '../../services/store';
 import {
   orderBurgerThunk,
-  resetOrderData,
-  TCurrentOrder
-} from '../../services/order/order-slice';
+  selectCurrentOrder,
+  selectIsOrderLoading,
+  selectOrderData,
+  clearOrderData
+} from '../../services/constructor/constructor-slice';
 import { selectUser } from '../../services/user/user-slice';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -14,19 +16,12 @@ export const BurgerConstructor: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems: TCurrentOrder = useSelector(
-    (state: RootState) => state.order.current
-  );
+
+  const constructorItems = useSelector(selectCurrentOrder);
   const user = useSelector(selectUser);
 
-  const orderRequest = useSelector(
-    (state: RootState) => state.order.isOrderLoading
-  );
-
-  const orderModalData = useSelector(
-    (state: RootState) => state.order.orderData
-  );
+  const orderRequest = useSelector(selectIsOrderLoading);
+  const orderModalData = useSelector(selectOrderData);
 
   const onOrderClick = () => {
     if (!constructorItems.bun || orderRequest) {
@@ -49,7 +44,7 @@ export const BurgerConstructor: FC = () => {
   };
 
   const closeOrderModal = () => {
-    dispatch(resetOrderData());
+    dispatch(clearOrderData());
   };
 
   const price = useMemo(
