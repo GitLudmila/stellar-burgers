@@ -13,6 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  testMatch: '**/*.@(spec|test).@(tsx|ts)',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -25,10 +26,12 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    // Vite dev server по умолчанию
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:4000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
+    contextOptions: {
+      bypassCSP: true
+    }
   },
 
   /* Configure projects for major browsers */
@@ -72,7 +75,8 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run start',
-    url: 'http://localhost:3000',
+    url: 'http://localhost:4000',
+    timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI
   }
 });
