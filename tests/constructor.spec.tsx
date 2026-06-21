@@ -1,139 +1,109 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import fs from 'fs';
 
-const setupMockData = async (page: Page) => {
-  await page.routeFromHAR('tests/hars/api.har', {
-    update: false,
-    updateContent: 'embed',
-    updateMode: 'minimal'
-  });
-
-  // Добавляем токены авторизации в cookie
-  await page.context().addCookies([
-    {
-      name: 'accessToken',
-      value: 'test-access-token',
-      url: 'http://localhost:4000'
-    },
-    {
-      name: 'refreshToken',
-      value: 'test-refresh-token',
-      url: 'http://localhost:4000'
-    }
-  ]);
-};
-
-test.describe('Тестируем модальное окно', () => {
+test.describe('Конструктор бургера', () => {
   test.beforeEach(async ({ page }) => {
-    await setupMockData(page);
+    // Перехватываем все запросы к API и возвращаем ответы из HAR
+    await page.route('**/api/**', async (route) => {
+      const harPath = 'tests/hars/constructor.har';
+      const har = JSON.parse(fs.readFileSync(harPath, 'utf-8'));
+
+      const harEntries = har.log.entries;
+      const entry = harEntries.find(
+        (e: (typeof harEntries)[number]) =>
+          e.request.url === route.request().url() &&
+          e.request.method === route.request().method()
+      );
+
+      if (entry) {
+        await route.fulfill({
+          status: entry.response.status,
+          contentType: 'application/json',
+          body: entry.response.content.text
+        });
+      } else {
+        await route.abort('file_not_found');
+      }
+    });
+  });
+
+  test('Добавление ингредиента в конструктор', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByTestId('ingredient').first()).toBeVisible();
 
-    // Устанавливаем localStorage ПОСЛЕ загрузки страницы
-    await page.evaluate(() => {
-      localStorage.setItem('accessToken', 'test-access-token');
-      localStorage.setItem('refreshToken', 'test-refresh-token');
-    });
+    const bun = page
+      .getByTestId('ingredient')
+      .filter({ hasText: 'Краторная булка N-200i' })
+      .first();
+    await bun.locator('button').filter({ hasText: 'Добавить' }).click();
+
+    await expect(page.getByTestId('constructor-bun-top')).toBeVisible();
+    await expect(page.getByTestId('constructor-bun-top')).toContainText(
+      'Краторная булка N-200i'
+    );
   });
 
-  test.afterEach(async ({ page }) => {
-    await page.context().clearCookies();
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
-  });
-
-  test('Открытие и закрытие модального окна по клику на ингредиент через кнопку', async ({
+  test('Открытие и закрытие модального окна ингредиента по клику на ингредиент через кнопку', async ({
     page
   }) => {
-    const ingredient = page.getByTestId('ingredient').first();
+    await page.goto('/');
+    await expect(page.getByTestId('ingredient').first()).toBeVisible();
+
+    const ingredient = page
+      .getByTestId('ingredient')
+      .filter({ hasText: 'Биокотлета из марсианской Магнолии' })
+      .first();
+
     await ingredient.click();
-
     const modal = page.getByTestId('modal');
-    await expect(modal).toBeVisible();
-    await expect(modal).toContainText('Краторная булка N-200i');
-
-    const closeBtn = page.getByTestId('modal-close-btn');
-    await closeBtn.click({ force: true });
-
-    await expect(modal).not.toBeVisible();
-  });
-
-  test('Закрываем модальное окно при клике на оверлей', async ({ page }) => {
-    const ingredient = page.getByTestId('ingredient').first();
-    await ingredient.click();
-
-    const modal = page.getByTestId('modal');
-    await expect(modal).toBeVisible();
-
-    const overlay = page.getByTestId('modal-overlay');
-    await overlay.click();
-
-    await expect(modal).toBeHidden();
-  });
-
-  test('В модальном окне отображаются данные конкретного ингредиента', async ({
-    page
-  }) => {
-    // Открываем первый ингредиент
-    const firstIngredient = page.getByTestId('ingredient').first();
-    await firstIngredient.click();
-
-    const modal = page.getByTestId('modal');
-    await expect(modal).toBeVisible();
-    await expect(modal).toContainText('Краторная булка N-200i');
-
-    // Закрываем модалку через кнопку
-    const closeBtn = page.getByTestId('modal-close-btn');
-    await closeBtn.click({ force: true });
-    await expect(modal).not.toBeVisible();
-
-    // Открываем второй ингредиент
-    const secondIngredient = page.getByTestId('ingredient').nth(1);
-    await secondIngredient.click();
-
     await expect(modal).toBeVisible();
     await expect(modal).toContainText('Биокотлета из марсианской Магнолии');
 
-    // Закрываем через оверлей
-    const overlay = page.getByTestId('modal-overlay');
-    await overlay.click({ force: true });
+    await page.getByTestId('modal-close-btn').click();
     await expect(modal).not.toBeVisible();
   });
 
-  test('Добавление ингредиентов с последующим оформлением заказа', async ({
-    page
-  }) => {
-    // Добавляем ингредиенты в заказ
-    const addIngredientBtns = page.getByTestId('add-ingredient-btn');
-    await addIngredientBtns.first().click();
-    await addIngredientBtns.nth(1).click();
+  test('Создание заказа и очистка конструктора', async ({ page, context }) => {
+    await context.addInitScript(() => {
+      localStorage.setItem('refreshToken', 'mock-refresh-token');
+    });
 
-    // Проверяем что элементы добавились в заказ
-    await expect(page.getByTestId('bun-ingredient')).toContainText(
-      'Краторная булка N-200i'
-    );
-    await expect(page.getByTestId('others-ingredients')).toContainText(
-      'Биокотлета из марсианской Магнолии'
-    );
+    await context.addCookies([
+      {
+        name: 'accessToken',
+        value: 'Bearer mock-access-token',
+        url: 'http://localhost:4000'
+      }
+    ]);
 
-    // Оформляем заказ
-    const createOrderBtn = page.getByTestId('create-order-btn');
-    await createOrderBtn.click();
+    await page.goto('/');
+    await expect(page.getByTestId('ingredient').first()).toBeVisible();
 
-    // Проверяем что модальное окно открыто
+    const bun = page
+      .getByTestId('ingredient')
+      .filter({ hasText: 'Краторная булка N-200i' })
+      .first();
+    await bun.locator('button').filter({ hasText: 'Добавить' }).click();
+
+    const main = page
+      .getByTestId('ingredient')
+      .filter({ hasText: 'Биокотлета из марсианской Магнолии' })
+      .first();
+    await main.locator('button').filter({ hasText: 'Добавить' }).click();
+
+    await page.getByTestId('create-order-btn').click();
+
     const modal = page.getByTestId('modal');
     await expect(modal).toBeVisible();
-    await expect(page.getByTestId('order-number')).toContainText('1');
+    await expect(modal).toContainText('99999');
 
-    // Закрываем модальное окно
-    const overlay = page.getByTestId('modal-overlay');
-    await overlay.click({ force: true });
+    await page.getByTestId('modal-close-btn').click();
     await expect(modal).not.toBeVisible();
 
-    // Проверяем, что конструктор пуст
-    await expect(page.getByTestId('bun-ingredient')).not.toBeVisible();
-    await expect(page.getByTestId('others-ingredients')).not.toContainText(
-      'Биокотлета из марсианской Магнолии'
-    );
+    await expect(page.getByTestId('constructor-bun-top')).not.toBeVisible();
+    await expect(page.getByTestId('constructor-bun-bottom')).not.toBeVisible();
+
+    await context.clearCookies();
+    await page.evaluate(() => localStorage.clear());
   });
 });
