@@ -160,7 +160,7 @@ const App = () => {
               <Modal
                 title={`#${feedNumber}`}
                 onClose={function (): void {
-                  handleModalClose;
+                  handleModalClose();
                 }}
               >
                 <OrderInfo />
@@ -173,7 +173,7 @@ const App = () => {
               <Modal
                 title={'Описание ингредиента'}
                 onClose={function (): void {
-                  handleModalClose;
+                  handleModalClose();
                 }}
               >
                 <IngredientDetails />
@@ -187,7 +187,7 @@ const App = () => {
                 <Modal
                   title={`#${profileOrderNumber}`}
                   onClose={function (): void {
-                    handleModalClose;
+                    handleModalClose();
                   }}
                 >
                   <OrderInfo />
